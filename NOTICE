@@ -1,0 +1,14 @@
+OnePlus 7 Wide AMOLED Gamut — portable LineageOS edition
+Copyright 2026 juanmacasado
+
+This distribution includes a modified binary derived from the LineageOS
+android_hardware_oplus LiveDisplay implementation.
+
+Upstream copyright:
+  SPDX-FileCopyrightText: 2019-2025 The LineageOS Project
+
+Upstream and project licensing:
+  SPDX-License-Identifier: Apache-2.0
+
+The module is an independent community project. LineageOS, custom ROM
+projects, OnePlus and OxygenOS are not affiliated with or responsible for it.

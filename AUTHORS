@@ -1,0 +1,18 @@
+# Authors
+
+## Original implementation
+
+juanmacasado
+
+- Original research and device investigation.
+- Wide AMOLED Gamut mode mapping.
+- HAL modification and flashable module implementation.
+- Testing and validation on the OnePlus 7 (guacamoleb).
+- Documentation and ROM integration patch.
+
+GitHub: https://github.com/juanmacasado
+
+## Upstream project
+
+The LiveDisplay HAL modified by this project originates from
+The LineageOS Project and is distributed under the Apache License 2.0.

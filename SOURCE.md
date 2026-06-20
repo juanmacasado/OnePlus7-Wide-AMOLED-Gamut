@@ -1,0 +1,52 @@
+# Source, portability and reproducibility
+
+## Upstream implementation
+
+This module derives from the LineageOS OnePlus LiveDisplay implementation in:
+
+- Repository: `LineageOS/android_hardware_oplus`
+- File: `aidl/livedisplay/DisplayModes.cpp`
+- License: Apache-2.0
+
+The upstream map is unchanged across the reviewed LineageOS 22.2, 23.0 and 23.2 branches:
+
+```text
+0 Vivid      -> display mode 0, seed 0
+1 Natural    -> display mode 1, seed 1
+2 Cinematic  -> display mode 0, seed 1
+3 Brilliant  -> display mode 4, seed 0
+```
+
+The modification preserves those modes and adds:
+
+```text
+4 Wide AMOLED Gamut -> display mode 2, seed 3
+```
+
+## Why this installer is portable across ROM builds
+
+ROMs can compile identical source with different toolchains, build IDs and optimization output, so their HAL SHA-256 values differ. Version 1.1.0 no longer requires an Infinity-X hash, but the bundled prebuilt is intentionally limited to Android 16 / SDK 36. It verifies the device, Android generation, AIDL service, Oplus panel interface, stable NDK dependency, standard profile names and OnePlus 7 companion interfaces.
+
+The replacement binary is still a known, integrity-checked prebuilt. The installer does not byte-patch an unknown ROM binary and does not claim compatibility when the semantic/ABI checks fail.
+
+## Reproducing the current prebuilt
+
+The source archive contains the exact patching tools used for the tested binary:
+
+- `patches/build-five-mode-hal.py`
+- `patches/five_mode_trampoline.S`
+- `patches/five_mode_trampoline.ld`
+
+The bundled replacement SHA-256 is:
+
+```text
+277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f
+```
+
+For a future fully source-built release, apply the following logical source change before building `vendor.lineage.livedisplay-service.oplus`:
+
+```cpp
+{4, {"Wide AMOLED Gamut", 2, 3}},
+```
+
+inside `DisplayModes::kModeMap`.
