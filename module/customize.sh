@@ -65,7 +65,7 @@ for NEEDLE in \
   "vendor.lineage.livedisplay-V1-ndk.so" \
   "IDisplayModes" \
   "/dev/oplus_display" \
-  "/data/vendor/display/default_display_mode" \
+  "$MODE_FILE" \
   "DisplayModesService" "Natural" "Cinematic" "Brilliant"; do
   if ! grep -Fqa "$NEEDLE" "$TARGET" 2>/dev/null; then
     ui_print "Missing expected HAL signature: $NEEDLE"
