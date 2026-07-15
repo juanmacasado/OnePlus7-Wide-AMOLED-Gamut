@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 juanmacasado
+# SPDX-License-Identifier: Apache-2.0
 """Patch the exact Infinity-X 2026-06-15 guacamoleb Oplus LiveDisplay HAL.
 
 Builds the five-mode HAL from a compatible reference binary.

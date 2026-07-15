@@ -10,5 +10,16 @@ Upstream copyright:
 Upstream and project licensing:
   SPDX-License-Identifier: Apache-2.0
 
+Immediate build provenance:
+  The specific bytes patched by this project were extracted from a
+  vendor.lineage.livedisplay-service.oplus binary produced by the
+  Infinity-X (Android 16, guacamoleb) build dated 2026-06-15, prior to
+  any modification by this project. That binary is itself a compile of
+  the unmodified upstream android_hardware_oplus Apache-2.0 source for
+  this file; no Infinity-X-specific changes to DisplayModes.cpp are
+  known or introduced by this project. Only the single kModeMap entry
+  described in SOURCE.md and the source patch is added.
+
 The module is an independent community project. LineageOS, custom ROM
-projects, OnePlus and OxygenOS are not affiliated with or responsible for it.
+projects (including Infinity-X), OnePlus and OxygenOS are not affiliated
+with or responsible for it, and none of these projects endorse it.

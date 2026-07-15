@@ -1,6 +1,14 @@
 # OnePlus 7 Wide AMOLED Gamut — portable LineageOS edition
 
+> **Disclaimer:** This is an independent community project, not affiliated with, endorsed by, or supported by The LineageOS Project, OnePlus, OxygenOS, Infinity-X or any other ROM project. Product and project names are used only to identify compatibility.
+
 A KernelSU/Magisk module that adds **Wide AMOLED Gamut** as a fifth native profile inside LiveDisplay on the OnePlus 7. It does not install or require a companion APK.
+
+> **Risk:** This module replaces a `/vendor` HAL binary and writes to kernel display nodes. It has passed the compatibility checks below on every ROM it has been tested on, but a mismatched or unusual build could still leave the display stack in a bad state (wrong colors, a stuck profile, or a bootloop requiring a vendor partition reflash to recover). Read the [uninstall behaviour](#installation) below, keep a way to reflash stock firmware/vendor images available, and do not flash on a device you cannot afford to recover.
+
+## Background
+
+Wide AMOLED Gamut is a real QDCM display mode present in the OxygenOS 12 panel/display firmware shipped on the OnePlus 7 family, but it was never wired up as a selectable profile in any known LineageOS-based LiveDisplay implementation for these devices — stock and every LineageOS build reviewed expose only Vivid, Natural, Cinematic and Brilliant. This project is the result of independent research into the Oplus display stack (panel seed values and QDCM mode identifiers) to identify the correct combination that activates it, and to expose it as a fifth native profile without patching app-level UI or requiring a companion APK. If you know of a prior implementation exposing this same mode, please open an issue.
 
 ## Portable compatibility model
 
@@ -23,6 +31,17 @@ The ROM's HAL hash is recorded for diagnostics but is no longer used as a ROM lo
 Designed for **LineageOS-derived Android 16 ROMs for the OnePlus 7 that use the standard Oplus AIDL LiveDisplay service and OxygenOS 12 display firmware**. Infinity-X Android 16 is tested. Other matching ROMs are supported by compatibility detection but remain community-tested until reported.
 
 This does not mean every ROM that merely contains a menu named LiveDisplay is automatically compatible. The installer aborts before changing anything unless the service, panel interface and standard profile signatures all match.
+
+## Device compatibility
+
+The installer's identity check (`module/customize.sh`) currently accepts device identity strings containing `guacamoleb`, `oneplus7` or `gm190`. End-to-end validation, however, has only been done on one device so far:
+
+| Codename | Status | Notes |
+|---|---|---|
+| `guacamoleb` | ✅ Tested | Validated with Infinity-X, Android 16 |
+| Other OnePlus 7 family codenames | ❔ Untested | Should pass the same runtime-contract checks on a matching ROM, but this is not yet confirmed by a real report |
+
+If you run this on another OnePlus 7 family device, please [open an issue](https://github.com/juanmacasado/OnePlus7-Wide-AMOLED-Gamut/issues/new/choose) with the result (working or not) so this table can be kept accurate — see `CONTRIBUTING.md` for what to include.
 
 ## Display profiles
 

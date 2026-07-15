@@ -1,4 +1,6 @@
 #!/system/bin/sh
+# SPDX-FileCopyrightText: 2026 juanmacasado
+# SPDX-License-Identifier: Apache-2.0
 SERVICE="vendor.lineage.livedisplay.IDisplayModes/default"
 MODE_FILE="/data/vendor/display/default_display_mode"
 SEED_NODE="/sys/kernel/oplus_display/seed"

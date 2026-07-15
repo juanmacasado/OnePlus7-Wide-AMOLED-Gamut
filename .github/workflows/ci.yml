@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run ShellCheck on module and build scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: '.'
+          ignore_paths: >-
+            .git
+          additional_files: |
+            module/action.sh
+            module/customize.sh
+            module/post-fs-data.sh
+            module/service.sh
+            module/uninstall.sh
+            scripts/build-module.sh
+
+  python-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install ruff
+        run: pip install ruff
+      - name: Lint patch tooling
+        run: ruff check patches/build-five-mode-hal.py
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [shellcheck, python-lint]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the flashable module
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+          bash scripts/build-module.sh
+      - name: Verify bundled HAL integrity
+        run: |
+          EXPECTED="277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f"
+          ACTUAL="$(sha256sum prebuilt/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus | awk '{print $1}')"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Bundled HAL SHA-256 mismatch: expected $EXPECTED, got $ACTUAL" >&2
+            exit 1
+          fi
+          echo "Bundled HAL SHA-256 verified: $ACTUAL"
+      - name: Upload built module
+        uses: actions/upload-artifact@v4
+        with:
+          name: flashable-module
+          path: out/*.zip
