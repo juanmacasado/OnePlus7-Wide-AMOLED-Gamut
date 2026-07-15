@@ -16,3 +16,9 @@ GitHub: https://github.com/juanmacasado
 
 The LiveDisplay HAL modified by this project originates from
 The LineageOS Project and is distributed under the Apache License 2.0.
+
+## Immediate build source
+
+The specific prebuilt bytes patched by this project were extracted from an
+Infinity-X (Android 16, guacamoleb) build. See `NOTICE` and `SOURCE.md` for
+details. Infinity-X is not affiliated with this project.

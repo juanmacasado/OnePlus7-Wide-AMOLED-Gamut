@@ -1,4 +1,6 @@
 #!/system/bin/sh
+# SPDX-FileCopyrightText: 2026 juanmacasado
+# SPDX-License-Identifier: Apache-2.0
 
 PAYLOAD_HASH="277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f"
 TARGET="/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"

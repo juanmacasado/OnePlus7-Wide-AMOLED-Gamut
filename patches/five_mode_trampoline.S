@@ -1,3 +1,5 @@
+    // SPDX-FileCopyrightText: 2026 juanmacasado
+    // SPDX-License-Identifier: Apache-2.0
     .text
     .global _start
     .type _start, %function

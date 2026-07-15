@@ -1,0 +1,54 @@
+name: Compatibility report
+description: Report whether this module worked (or not) on your device/ROM
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing! Reports for codenames other than `guacamoleb` are
+        especially valuable — see the device compatibility table in the README.
+  - type: input
+    id: device
+    attributes:
+      label: Device codename and model
+      description: "ro.product.device / ro.product.model"
+      placeholder: "e.g. guacamole / OnePlus7"
+    validations:
+      required: true
+  - type: input
+    id: rom
+    attributes:
+      label: ROM name and build
+      description: "ro.build.display.id / ro.build.fingerprint"
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome
+      options:
+        - "Installed and the fifth profile worked correctly"
+        - "Installed but the fifth profile did not behave correctly"
+        - "Installer rejected the ROM/device (compatibility check failed)"
+        - "Something else went wrong (see details below)"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What happened, and any relevant compatibility.info / display-modes.log excerpts
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: compatibility.info and display-modes.log
+      description: |
+        Paste the contents of:
+        /data/adb/modules/oneplus7_extended_display_modes/compatibility.info
+        /data/adb/modules/oneplus7_extended_display_modes/display-modes.log
+      render: text
+    validations:
+      required: false

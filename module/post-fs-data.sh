@@ -1,4 +1,6 @@
 #!/system/bin/sh
+# SPDX-FileCopyrightText: 2026 juanmacasado
+# SPDX-License-Identifier: Apache-2.0
 MODDIR=${0%/*}
 BIN="$MODDIR/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"
 LOG="$MODDIR/display-modes.log"

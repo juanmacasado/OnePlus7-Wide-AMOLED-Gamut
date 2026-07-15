@@ -1,4 +1,6 @@
 #!/system/bin/sh
+# SPDX-FileCopyrightText: 2026 juanmacasado
+# SPDX-License-Identifier: Apache-2.0
 # OnePlus 7 Wide AMOLED Gamut - portable LineageOS edition
 # 0 Vivid              -> QDCM zhal_native    / seed 0
 # 1 Natural            -> QDCM SRGB           / seed 1

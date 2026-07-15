@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+* Documents the immediate build provenance of the bundled HAL (Infinity-X, 2026-06-15, guacamoleb) alongside the upstream LineageOS Apache-2.0 source in `NOTICE`, `SOURCE.md` and `AUTHORS`.
+* Adds SPDX headers to all original scripts and patch tooling.
+* Adds a trademark disclaimer and a risk/safety note to the README.
+* Adds a "Background" section documenting this as independent research.
+* Adds a device compatibility table, `CONTRIBUTING.md` and a compatibility-report issue template to support extending validated coverage across the OnePlus 7 family.
+* Adds `SECURITY.md` for reporting bootloops/bricks and safety issues.
+* Adds CI (ShellCheck, Python lint, and a build/HAL-integrity check) via GitHub Actions.
+
+No functional change to the flashable module itself; `module.prop` version remains 1.1.0.
+
 ## 1.1.0 — 2026-06-20
 
 * Adds Wide AMOLED Gamut as a fifth native LiveDisplay color profile.
