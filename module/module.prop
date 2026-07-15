@@ -1,6 +1,6 @@
 id=oneplus7_extended_display_modes
 name=OnePlus 7 Wide AMOLED Gamut (LineageOS)
-version=1.1.0
-versionCode=10100
+version=1.1.1.1
+versionCode=10101
 author=juanmacasado
 description=Portable LineageOS-based ROM module for OnePlus 7: adds Wide AMOLED Gamut as a fifth native LiveDisplay profile while preserving Vivid, Natural, Cinematic and Brilliant. No APK required.

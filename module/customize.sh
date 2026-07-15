@@ -11,7 +11,7 @@ SEED_NODE="/sys/kernel/oplus_display/seed"
 INFO="$MODPATH/compatibility.info"
 
 ui_print "*********************************************"
-ui_print " OnePlus 7 Wide AMOLED Gamut 1.1.0"
+ui_print " OnePlus 7 Wide AMOLED Gamut 1.1.1.1"
 ui_print " Portable LineageOS edition"
 ui_print "*********************************************"
 ui_print "Author: juanmacasado"
@@ -96,7 +96,7 @@ ui_print "- Current HAL SHA-256: $TARGET_HASH"
 ui_print "- Binary hash is informational, not a ROM lock"
 
 cat > "$INFO" <<INFOEOF
-module=OnePlus 7 Wide AMOLED Gamut 1.1.0
+module=OnePlus 7 Wide AMOLED Gamut 1.1.1.1
 installation_mode=portable-semantic-compatibility
 rom_display=$ROM_DISPLAY
 fingerprint=$FINGERPRINT
