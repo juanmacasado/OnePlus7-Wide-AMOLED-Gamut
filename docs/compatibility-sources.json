@@ -1,0 +1,37 @@
+[
+  {
+    "repo": "LineageOS/android_hardware_oplus",
+    "branch": "lineage-24.0",
+    "commit": "eaa32c03dc4efe177517e8293eaa43e9ffedb361"
+  },
+  {
+    "repo": "crdroidandroid/android_hardware_oplus",
+    "branch": "17.0",
+    "commit": "2a8a5230ec006ada813c45ec7893140b0a0f043e"
+  },
+  {
+    "repo": "LineageOS/android_hardware_lineage_interfaces",
+    "branch": "lineage-24.0",
+    "commit": "68dca0c523594fb7c34e94782d0f21660530a2dc"
+  },
+  {
+    "repo": "LineageOS/android_bionic",
+    "branch": "lineage-24.0",
+    "commit": "ff3bb041547924ac1a7504e4b3bd3ea18169ca2f"
+  },
+  {
+    "repo": "LineageOS/android_device_oneplus_sm8150-common",
+    "branch": "lineage-24.0",
+    "commit": "21cb9a45801be6bd73c25e0e0e7d02dd75605965"
+  },
+  {
+    "repo": "crdroidandroid/android_device_oneplus_sm8150-common",
+    "branch": "17.0",
+    "commit": "33cb3764334296b7ccc8bc52eb7e8842ec4c0a9c"
+  },
+  {
+    "repo": "crdroidandroid/android",
+    "branch": "17.0",
+    "commit": "88b3209af69a52d852699509d4b395d966473514"
+  }
+]

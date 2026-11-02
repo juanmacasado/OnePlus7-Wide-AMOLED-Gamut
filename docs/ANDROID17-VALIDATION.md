@@ -1,5 +1,8 @@
 # Android 17 / Infinity-X 4.1 validation — 2026-11-02
 
+Historical audit for 1.2.0. Current 1.3.0-rc1 compatibility checks and their
+validation limits are in [PORTABLE-COMPATIBILITY.md](PORTABLE-COMPATIBILITY.md).
+
 Public release: **1.2.0**, using the same payload as the tested RC2.
 The initial audit below used reversible runtime tests. RC2 was subsequently
 installed successfully through KernelSU Next / Hybrid Mount and the maintainer

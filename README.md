@@ -1,15 +1,19 @@
-# OnePlus 7 Wide AMOLED Gamut — LineageOS / Infinity-X
+# OnePlus 7 Wide AMOLED Gamut — LineageOS / crDroid / Infinity-X
 
 A KernelSU/Magisk module by **juanmacasado** that adds **Wide AMOLED Gamut** as a
 fifth native LiveDisplay profile on the OnePlus 7. No companion APK is required.
 
-**1.2.0 supports the audited Android 17 / Infinity-X 4.1 build.** The unchanged
-HAL passed reversible five-profile runtime tests. The corrected installer was
-installed successfully through KernelSU Next / Hybrid Mount, and the maintainer
-then confirmed that the module works. A separate post-install reboot audit was
-not captured; prolonged HDR/FOD/sleep and recovery tests remain unverified.
-Read the [validation record](docs/ANDROID17-VALIDATION.md) and
-[recovery instructions](docs/RECOVERY.md) before installing.
+**1.3.0-rc1 adds ROM-independent compatibility detection for Android 16/17.**
+LineageOS 24, crDroid Android 17 and other LineageOS-derived ROMs are admitted
+when their Oplus LiveDisplay, panel and loader contract matches. No Infinity-X
+build string or stock HAL hash is required.
+
+This is a **prerelease**: the unchanged HAL was tested on Infinity-X 4.1, while
+the newly broadened installer has source/host-test coverage and awaits device
+reports on the other ROMs. Keep 1.2.0 as the stable reference. See the
+[portable compatibility audit](docs/PORTABLE-COMPATIBILITY.md),
+[earlier device validation](docs/ANDROID17-VALIDATION.md) and
+[recovery instructions](docs/RECOVERY.md).
 
 Independent community project; not affiliated with or endorsed by LineageOS,
 OnePlus, OxygenOS, Infinity-X or any other ROM project. Names identify
@@ -18,18 +22,21 @@ an incompatible HAL or mounting setup can break LiveDisplay or system startup.
 
 ## Supported scope
 
-| Device / platform | Gate and validation |
+| Device / platform | Detection and evidence |
 | --- | --- |
-| OnePlus 7 / guacamoleb, Android 16 / SDK 36 | Existing standard Oplus AIDL semantic checks; prior release validation |
-| OnePlus 7 / GM1901, Android 17 / SDK 37 | Only `Project_Infinity-X-4.1-guacamoleb-02.11.2026`; audited stock HAL hash or the known payload; five-profile temporary runtime test passed |
-| Other Android 17 builds or devices | Rejected; require a separate ABI and device audit |
+| OnePlus 7 / Android 17 / Infinity-X 4.1 | Earlier physical HAL validation; new contract gates await a new device run |
+| OnePlus 7 / Android 17 / LineageOS 24 or crDroid | Matching HAL/device sources reviewed; runtime-contract detection enabled; physical tests pending |
+| OnePlus 7 / Android 17 / other LineageOS-derived ROMs | Same contract required, independent of branding; physical tests pending |
+| OnePlus 7 / Android 16 / SDK 36 | Same new contract gates; prior-version scope retained |
+| Other devices or SDKs | Rejected |
 
-All installs require arm64, 4 KiB pages, the Oplus seed and panel interfaces,
-IDisplayModes and its standard companion signatures, payload integrity and
-loader dependency resolution. Stable AIDL alone does not validate private
-libbinder/libutils ABI. A ROM fingerprint may be spoofed; SDK and ROM-specific
-properties determine the version gate. Root-manager installation while Android
-is running is required; recovery installation is rejected.
+Every install requires arm64, 4 KiB pages, Oplus panel support, exactly the
+supported companion services, the frozen AIDL V1 version/hash, the standard
+four-profile map and QDCM modes, plus integrity and vendor-namespace linker
+validation. Unknown service/profile maps fail closed. Sharing a LineageOS base
+alone is insufficient; see the [full contract](docs/PORTABLE-COMPATIBILITY.md).
+Recovery installation is rejected. No ROM, kernel or partition is flashed by
+the compatibility checks.
 
 ## Profiles
 

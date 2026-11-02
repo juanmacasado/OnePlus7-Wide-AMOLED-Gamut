@@ -1,10 +1,14 @@
-# Installation and recovery for 1.2.0
+# Installation and recovery for 1.3.0-rc1
 
 The HAL was tested through a temporary mount, with stock restored afterward.
 The corrected RC2 was subsequently installed through KernelSU Next / Hybrid Mount
 and the maintainer reported that it works. A separate post-install boot audit
 and recovery test were not captured. Keep the original ZIP and the ROM's
 recovery/firmware available. Do not assume a bootloop is impossible.
+
+1.3.0-rc1 broadens installer detection and is a prerelease; new getters/gates
+and additional ROMs have not yet been tested on a device. See
+[portable compatibility](PORTABLE-COMPATIBILITY.md). No prior backup is removed.
 
 ## Before installation
 

@@ -42,9 +42,18 @@ affiliated with this project.
 
 ## Why this installer is portable across ROM builds
 
-ROMs can compile identical source with different toolchains, build IDs and optimization output, so their HAL SHA-256 values differ. Version 1.1.0 no longer requires an Infinity-X hash, with semantic checks on Android 16 / SDK 36. Version 1.2.0 also admits only the audited Android 17 / SDK 37 Infinity-X 4.1 build, after a reversible runtime test of the unchanged payload. It verifies the device, Android generation, AIDL service, Oplus panel interface, stable NDK dependency, standard profile names and OnePlus 7 companion interfaces.
+ROMs can compile identical source with different toolchains and build IDs.
+Version 1.3.0-rc1 replaces the 1.2.0 Infinity-X build/hash restriction with the
+[portable runtime contract](docs/PORTABLE-COMPATIBILITY.md): stable AIDL V1
+version/hash, actual profile enumeration, exact companion-interface set,
+framework feature, panel QDCM modes and vendor-namespace relocation checks.
+The stock HAL hash is recorded for diagnostics. The bundled payload hash stays
+fixed and mandatory. Unknown binaries are never patched in place.
 
-The replacement binary is still a known, integrity-checked prebuilt. The installer does not byte-patch an unknown ROM binary and does not claim compatibility when the semantic/ABI checks fail.
+LineageOS 24 and crDroid Android 17 have matching reviewed Oplus HAL sources and
+relevant OnePlus 7 flags. These source findings support conditional installer
+compatibility, not a claim that those ROMs have been physically tested. Pinned
+sources and the evidence matrix are in `docs/PORTABLE-COMPATIBILITY.md`.
 
 ## Reproducing the current prebuilt
 

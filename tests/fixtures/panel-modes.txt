@@ -1,0 +1,5 @@
+Available Color Modes:
+  SRGB 1 DynamicRange: sdr
+  advance_native 2 DynamicRange: sdr
+  advance_p3 4 DynamicRange: sdr
+  zhal_native 0 DynamicRange: sdr

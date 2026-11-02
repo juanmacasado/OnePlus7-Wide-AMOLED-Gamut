@@ -35,3 +35,7 @@ documentation are submitted under GPL-3.0-or-later unless explicitly agreed
 otherwise. Contributions to the Apache-2.0 HAL patch tooling and ROM integration
 patch retain Apache-2.0. Preserve existing copyright and SPDX notices. See
 `LICENSING.md`; previously published versions keep their original licenses.
+
+For 1.3.0-rc1 portable detection, LineageOS/crDroid source review is distinguished
+from physical testing. Include `compatibility.info` and post-boot Action output;
+never bypass a rejected contract check. See `docs/PORTABLE-COMPATIBILITY.md`.

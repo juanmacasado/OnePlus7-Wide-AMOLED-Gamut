@@ -7,6 +7,7 @@ SERVICE=vendor.lineage.livedisplay.IDisplayModes/default
 MODE_FILE=/data/vendor/display/default_display_mode
 SEED_NODE=/sys/kernel/oplus_display/seed
 BIN=/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus
+AIDL_V1_HASH=1cf17f6e8d1bc4b3fe962ea0144d00e414201811
 PAYLOAD_HASH=277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f
 
 read_one_line() { tr -d '\r\n[:space:]' 2>/dev/null < "$1"; }

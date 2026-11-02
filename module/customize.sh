@@ -4,10 +4,11 @@
 # Sourced by the root manager after extraction; Android must be running.
 # shellcheck source=module/common.sh
 . "$MODPATH/common.sh"
+# shellcheck source=module/compatibility.sh
+. "$MODPATH/compatibility.sh"
 PAYLOAD="$MODPATH/system/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"
 INFO="$MODPATH/compatibility.info"
-ANDROID17_STOCK_HASH=e560a2af35908d40e6f564f2f72bb315ddd3bd3cc3da13fca49c2bcdc3ce40e5
-ui_print 'OnePlus 7 Wide AMOLED Gamut 1.2.0'
+ui_print 'OnePlus 7 Wide AMOLED Gamut 1.3.0-rc1'
 [ "${BOOTMODE:-false}" = true ] || abort 'Install from the root manager in running Android; recovery is not supported.'
 [ "$(id -u)" = 0 ] || abort 'Root is required.'
 [ "${ARCH:-}" = arm64 ] || abort 'Only arm64 is supported.'
@@ -39,16 +40,31 @@ done
 TARGET_HASH=$(sha256sum "$BIN" | awk '{print $1}')
 ACTUAL_PAYLOAD_HASH=$(sha256sum "$PAYLOAD" | awk '{print $1}')
 [ "$ACTUAL_PAYLOAD_HASH" = "$PAYLOAD_HASH" ] || abort 'Bundled HAL integrity check failed'
-if [ "$SDK" = 37 ] && [ "$(getprop ro.infinity.build.version)" != \
-   Project_Infinity-X-4.1-guacamoleb-02.11.2026 ]; then
-  abort 'Android 17 support is scoped to the audited Infinity-X 4.1 build (2026-11-02)'
-fi
-# AIDL V1 alone does not guarantee private libbinder/libutils C++ ABI stability.
-# SDK 37 is admitted only for the observed ROM HAL or an existing payload.
-if [ "$SDK" = 37 ] && [ "$TARGET_HASH" != "$ANDROID17_STOCK_HASH" ] &&
-   [ "$TARGET_HASH" != "$PAYLOAD_HASH" ]; then
-  abort "Android 17 HAL has not been audited: $TARGET_HASH"
-fi
+# Brand-neutral checks replace the old Infinity-X build/hash allowlist.
+# The payload still has a fixed integrity hash; no unknown ROM is byte-patched.
+timeout 10 pm list features 2>/dev/null | grep -Fqx 'feature:org.lineageos.livedisplay' ||
+  abort 'The ROM does not advertise LineageOS LiveDisplay'
+SERVICE_LIST=$(timeout 10 service list 2>/dev/null) || abort 'Could not enumerate services'
+printf '%s\n' "$SERVICE_LIST" | standard_interface_set ||
+  abort 'Unexpected LiveDisplay interface set; expected exactly DisplayModes/AntiFlicker/PictureAdjustment/SunlightEnhancement'
+for INTERFACE in IDisplayModes IAntiFlicker IPictureAdjustment ISunlightEnhancement; do
+  INSTANCE="vendor.lineage.livedisplay.$INTERFACE/default"
+  interface_ready "$INSTANCE" || abort "Required service missing: $INSTANCE"
+  [ "$(interface_version "$INSTANCE")" = 1 ] || abort "Unsupported AIDL version: $INSTANCE"
+  [ "$(interface_hash "$INSTANCE")" = "$AIDL_V1_HASH" ] || abort "Unsupported AIDL contract: $INSTANCE"
+done
+ALLOW_FIVE=false
+[ "$TARGET_HASH" != "$PAYLOAD_HASH" ] || ALLOW_FIVE=true
+MODE_REPLY=$(timeout 10 service call "$SERVICE" 1 2>/dev/null) || abort 'Could not query display profiles'
+MODE_COUNT=$(printf '%s\n' "$MODE_REPLY" | parse_parcel modes "$ALLOW_FIVE") ||
+  abort 'Expected standard Vivid/Natural/Cinematic/Brilliant profiles; unfamiliar map rejected'
+CURRENT_SEED=$(read_one_line "$SEED_NODE")
+case "$CURRENT_SEED" in 0|1|3) ;; *) abort "Unexpected panel seed state: $CURRENT_SEED" ;; esac
+timeout 15 dumpsys SurfaceFlinger 2>/dev/null | panel_contract ||
+  abort 'Required Qualcomm QDCM modes (0,1,2,4) not found in panel diagnostics'
+# Validate the test path namespace rather than accidentally testing system libs.
+grep -Eq '^dir[.]vendor[[:space:]]*=[[:space:]]*/data/local/tests/vendor/?[[:space:]]*$' \
+  /linkerconfig/ld.config.txt || abort 'Vendor linker test namespace is unavailable'
 # /data/adb is assigned the system linker namespace on this ROM. A vendor
 # executable must be checked in a vendor test directory, which uses the same
 # namespace as /vendor/bin. Do not change global linker config or LD_* variables.
@@ -59,7 +75,7 @@ LINKER_CHECK=$(mktemp -d "$LINKER_ROOT/oneplus7-gamut.XXXXXX") ||
 LINKER_OK=false
 if cp "$PAYLOAD" "$LINKER_CHECK/hal" && chmod 0755 "$LINKER_CHECK/hal" &&
    [ "$(sha256sum "$LINKER_CHECK/hal" | awk '{print $1}')" = "$PAYLOAD_HASH" ]; then
-  if /system/bin/linker64 --list "$LINKER_CHECK/hal" > "$MODPATH/linker-check.txt" 2>&1; then
+  if LD_LIBRARY_PATH='' LD_PRELOAD='' timeout 15 /system/bin/linker64 --list "$LINKER_CHECK/hal" > "$MODPATH/linker-check.txt" 2>&1; then
     LINKER_OK=true
   fi
 fi
@@ -85,7 +101,7 @@ if [ -d "$OLD" ]; then
   tar -cf "$BACKUP/previous-module.tar" -C "$OLD" . || abort 'Previous module backup failed'
 fi
 cat > "$INFO" <<INFOEOF
-module_version=1.2.0
+module_version=1.3.0-rc1
 sdk=$SDK
 release=$RELEASE
 rom_display=$ROM_DISPLAY
@@ -95,7 +111,13 @@ model=$MODEL
 original_visible_hal_sha256=$TARGET_HASH
 replacement_hal_sha256=$PAYLOAD_HASH
 backup=$BACKUP
-android17_scope=audited-hal-only
+compatibility=oplus-aidl-v1-runtime-contract
+aidl_version=1
+aidl_hash=$AIDL_V1_HASH
+mode_count=$MODE_COUNT
+qdcm_modes=0:zhal_native,1:SRGB,2:advance_native,4:advance_p3
+lineage_version=$(getprop ro.lineage.version)
+crdroid_version=$(getprop ro.crdroid.version)
 INFOEOF
 cp "$INFO" "$BACKUP/compatibility.info" || abort 'Backup metadata failed'
 set_perm_recursive "$MODPATH" 0 0 0755 0644
@@ -106,5 +128,6 @@ done
 ui_print "- Android $RELEASE / SDK $SDK; HAL checks passed"
 ui_print "- Backup: $BACKUP"
 ui_print '- system/vendor overlay prepared; physical vendor is unchanged'
-ui_print '- Runtime verified on Infinity-X 4.1; maintainer reports working after installation'
-ui_print '- Read docs/ANDROID17-VALIDATION.md and docs/RECOVERY.md before reboot'
+ui_print '- ROM-independent contract checks passed; no ROM build/hash lock'
+ui_print '- Physical validation: Infinity-X 4.1; other matching ROMs need device reports'
+ui_print '- Read docs/PORTABLE-COMPATIBILITY.md and docs/RECOVERY.md before reboot'

@@ -37,6 +37,13 @@ jobs:
         run: |
           python3 -m unittest discover -s tests -v
           bash scripts/build-module.sh
+      - name: Test parsers with BusyBox awk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y busybox
+          mkdir -p "$RUNNER_TEMP/gamut-busybox"
+          ln -s "$(command -v busybox)" "$RUNNER_TEMP/gamut-busybox/awk"
+          PATH="$RUNNER_TEMP/gamut-busybox:$PATH" python3 -m unittest discover -s tests -v
       - name: Verify bundled HAL integrity
         run: |
           EXPECTED="277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f"

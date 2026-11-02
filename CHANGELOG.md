@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0-rc1 — 2026-11-03
+
+* Replaces the Android 17 Infinity-X build/HAL-hash allowlist with a ROM-independent Oplus runtime contract for SDK 36/37 on the OnePlus 7.
+* Adds read-only stable AIDL V1 version/hash, exact companion-interface, real profile-map, framework feature and QDCM panel checks. Unexpected extra interfaces or custom profile maps are rejected.
+* Retains payload integrity, backups and vendor-namespace relocation checks; validates the namespace and clears inherited linker path overrides for the check only.
+* Reviews matching Android 17 LineageOS/crDroid Oplus and sm8150 device sources, with pinned commits and an honest source/host/device validation matrix.
+* Adds strict service-parcel parsing and regression fixtures. No payload, profile mapping, physical partition or SELinux change.
+* Prerelease: new detection paths and additional ROMs need device reports. Stable 1.2.0 remains available.
+
+
 ## 1.2.0 — 2026-11-02
 
 * Publishes Android 17 support for the audited Infinity-X 4.1 guacamoleb build, with the same integrity-checked HAL tested in RC2.

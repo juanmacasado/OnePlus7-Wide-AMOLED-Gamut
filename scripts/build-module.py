@@ -31,8 +31,9 @@ def main():
         files[name] = root / name
     for p in (root / "LICENSES").glob("*.txt"):
         files[p.relative_to(root).as_posix()] = p
-    for p in (root / "docs").rglob("*.md"):
-        files[p.relative_to(root).as_posix()] = p
+    for p in (root / "docs").rglob("*"):
+        if p.is_file():
+            files[p.relative_to(root).as_posix()] = p
     args.out_dir.mkdir(parents=True, exist_ok=True)
     output = args.out_dir / f"OnePlus7-Wide-AMOLED-Gamut-LineageOS-v{props['version']}.zip"
     temporary = output.with_suffix(".zip.tmp")
