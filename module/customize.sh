@@ -28,7 +28,8 @@ done
 case "$SDK" in 36|37) ;; *) abort "Unsupported SDK: $SDK (only 36/37)" ;; esac
 [ -f "$BIN" ] || abort "Oplus LiveDisplay HAL missing: $BIN"
 [ -f "$PAYLOAD" ] || abort 'Bundled five-mode HAL missing'
-[ -r "$SEED_NODE" ] && [ -e /dev/oplus_display ] || abort 'Oplus panel interface missing'
+[ -r "$SEED_NODE" ] || abort 'Oplus seed interface missing'
+[ -e /dev/oplus_display ] || abort 'Oplus panel interface missing'
 service_ready || abort 'LineageOS IDisplayModes is not accessible'
 for NEEDLE in vendor.lineage.livedisplay-V1-ndk.so IDisplayModes /dev/oplus_display \
   "$MODE_FILE" DisplayModesService Natural Cinematic Brilliant \
