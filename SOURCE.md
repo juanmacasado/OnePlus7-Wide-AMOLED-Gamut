@@ -42,7 +42,7 @@ affiliated with this project.
 
 ## Why this installer is portable across ROM builds
 
-ROMs can compile identical source with different toolchains, build IDs and optimization output, so their HAL SHA-256 values differ. Version 1.1.0 no longer requires an Infinity-X hash, but the bundled prebuilt is intentionally limited to Android 16 / SDK 36. It verifies the device, Android generation, AIDL service, Oplus panel interface, stable NDK dependency, standard profile names and OnePlus 7 companion interfaces.
+ROMs can compile identical source with different toolchains, build IDs and optimization output, so their HAL SHA-256 values differ. Version 1.1.0 no longer requires an Infinity-X hash, with semantic checks on Android 16 / SDK 36. Version 1.2.0 also admits only the audited Android 17 / SDK 37 Infinity-X 4.1 build, after a reversible runtime test of the unchanged payload. It verifies the device, Android generation, AIDL service, Oplus panel interface, stable NDK dependency, standard profile names and OnePlus 7 companion interfaces.
 
 The replacement binary is still a known, integrity-checked prebuilt. The installer does not byte-patch an unknown ROM binary and does not claim compatibility when the semantic/ABI checks fail.
 
@@ -67,3 +67,26 @@ For a future fully source-built release, apply the following logical source chan
 ```
 
 inside `DisplayModes::kModeMap`.
+
+## Android 17 RC and deterministic packaging
+
+See `docs/ANDROID17-VALIDATION.md` for the exact ROM and hashes. The stock SDK 37
+HAL has different code addresses: the old patch must never be applied to it.
+The distributed payload has **not** changed and is **not** a newly source-built
+Android 17 HAL. Its private C++ ABI was checked by loading/running on the tested
+ROM; matching AIDL V1 signatures alone would not establish compatibility.
+
+Run `bash scripts/build-module.sh` with Python 3 to generate the ZIP. All paths
+are sorted; permissions and UTC timestamps are fixed (default 1980-01-01).
+`SOURCE_DATE_EPOCH` may override the timestamp; use the same value to reproduce
+the same bytes. ZIP_STORED avoids compression-library differences. This
+reproduces the package from the source tree and prebuilt, not the upstream HAL
+from C++ source. `python3 -m unittest discover -s tests -v` checks reproducibility
+and installer safety gates.
+
+## Licensing by component
+
+From 1.2.0, the project's original module scripts, packaging tools, tests and
+documentation use GPL-3.0-or-later. The existing HAL and `patches/` components
+remain Apache-2.0. The payload bytes and source-integration patch are unchanged;
+no claim is made that the prebuilt has been relicensed to GPL. See `LICENSING.md`.

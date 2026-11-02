@@ -2,13 +2,15 @@ cff-version: 1.2.0
 message: "Please preserve the original authorship or credit this project when integrating the change into a ROM."
 title: "OnePlus 7 Wide AMOLED Gamut"
 type: software
-version: "1.1.1.1"
-date-released: "2026-07-15"
+version: "1.2.0"
+date-released: "2026-11-02"
 authors:
   - alias: "juanmacasado"
 repository-code: "https://github.com/juanmacasado/OnePlus7-Wide-AMOLED-Gamut"
 url: "https://github.com/juanmacasado/OnePlus7-Wide-AMOLED-Gamut"
-license: "Apache-2.0"
+license:
+  - "GPL-3.0-or-later"
+  - "Apache-2.0"
 abstract: "Adds Wide AMOLED Gamut as a fifth native LineageOS LiveDisplay color profile on the OnePlus 7."
 keywords:
   - OnePlus 7

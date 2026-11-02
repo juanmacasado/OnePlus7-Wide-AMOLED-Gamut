@@ -1,116 +1,111 @@
-# OnePlus 7 Wide AMOLED Gamut — portable LineageOS edition
+# OnePlus 7 Wide AMOLED Gamut — LineageOS / Infinity-X
 
-> **Disclaimer:** This is an independent community project, not affiliated with, endorsed by, or supported by The LineageOS Project, OnePlus, OxygenOS, Infinity-X or any other ROM project. Product and project names are used only to identify compatibility.
+A KernelSU/Magisk module by **juanmacasado** that adds **Wide AMOLED Gamut** as a
+fifth native LiveDisplay profile on the OnePlus 7. No companion APK is required.
 
-A KernelSU/Magisk module that adds **Wide AMOLED Gamut** as a fifth native profile inside LiveDisplay on the OnePlus 7. It does not install or require a companion APK.
+**1.2.0 supports the audited Android 17 / Infinity-X 4.1 build.** The unchanged
+HAL passed reversible five-profile runtime tests. The corrected installer was
+installed successfully through KernelSU Next / Hybrid Mount, and the maintainer
+then confirmed that the module works. A separate post-install reboot audit was
+not captured; prolonged HDR/FOD/sleep and recovery tests remain unverified.
+Read the [validation record](docs/ANDROID17-VALIDATION.md) and
+[recovery instructions](docs/RECOVERY.md) before installing.
 
-> **Risk:** This module replaces a `/vendor` HAL binary and writes to kernel display nodes. It has passed the compatibility checks below on every ROM it has been tested on, but a mismatched or unusual build could still leave the display stack in a bad state (wrong colors, a stuck profile, or a bootloop requiring a vendor partition reflash to recover). Read the [uninstall behaviour](#installation) below, keep a way to reflash stock firmware/vendor images available, and do not flash on a device you cannot afford to recover.
-
-## Background
-
-Wide AMOLED Gamut is a real QDCM display mode present in the OxygenOS 12 panel/display firmware shipped on the OnePlus 7 family, but it was never wired up as a selectable profile in any known LineageOS-based LiveDisplay implementation for these devices — stock and every LineageOS build reviewed expose only Vivid, Natural, Cinematic and Brilliant. This project is the result of independent research into the Oplus display stack (panel seed values and QDCM mode identifiers) to identify the correct combination that activates it, and to expose it as a fifth native profile without patching app-level UI or requiring a companion APK. If you know of a prior implementation exposing this same mode, please open an issue.
-
-## Portable compatibility model
-
-This release is not tied to an Infinity-X build hash. Custom ROMs often compile the same LineageOS/Oplus LiveDisplay source into different binaries, so exact SHA-256 matching would reject otherwise compatible ROMs.
-
-The installer instead validates the runtime contract:
-
-- OnePlus 7 identity (`guacamoleb`, `OnePlus7` or GM190x).
-- Android 16 (SDK 36).
-- OxygenOS 12-compatible Oplus display stack (`/dev/oplus_display` and the panel seed node).
-- The standard AIDL service `vendor.lineage.livedisplay.IDisplayModes/default`.
-- The standard four profiles: Vivid, Natural, Cinematic and Brilliant.
-- The expected OnePlus 7 LiveDisplay companion interfaces.
-- The stable `vendor.lineage.livedisplay-V1-ndk.so` dependency.
-
-The ROM's HAL hash is recorded for diagnostics but is no longer used as a ROM lock.
+Independent community project; not affiliated with or endorsed by LineageOS,
+OnePlus, OxygenOS, Infinity-X or any other ROM project. Names identify
+compatibility only. The module overlays a vendor HAL and requests panel modes;
+an incompatible HAL or mounting setup can break LiveDisplay or system startup.
 
 ## Supported scope
 
-Designed for **LineageOS-derived Android 16 ROMs for the OnePlus 7 that use the standard Oplus AIDL LiveDisplay service and OxygenOS 12 display firmware**. Infinity-X Android 16 is tested. Other matching ROMs are supported by compatibility detection but remain community-tested until reported.
+| Device / platform | Gate and validation |
+| --- | --- |
+| OnePlus 7 / guacamoleb, Android 16 / SDK 36 | Existing standard Oplus AIDL semantic checks; prior release validation |
+| OnePlus 7 / GM1901, Android 17 / SDK 37 | Only `Project_Infinity-X-4.1-guacamoleb-02.11.2026`; audited stock HAL hash or the known payload; five-profile temporary runtime test passed |
+| Other Android 17 builds or devices | Rejected; require a separate ABI and device audit |
 
-This does not mean every ROM that merely contains a menu named LiveDisplay is automatically compatible. The installer aborts before changing anything unless the service, panel interface and standard profile signatures all match.
+All installs require arm64, 4 KiB pages, the Oplus seed and panel interfaces,
+IDisplayModes and its standard companion signatures, payload integrity and
+loader dependency resolution. Stable AIDL alone does not validate private
+libbinder/libutils ABI. A ROM fingerprint may be spoofed; SDK and ROM-specific
+properties determine the version gate. Root-manager installation while Android
+is running is required; recovery installation is rejected.
 
-## Device compatibility
+## Profiles
 
-The installer's identity check (`module/customize.sh`) currently accepts device identity strings containing `guacamoleb`, `oneplus7` or `gm190`. End-to-end validation, however, has only been done on one device so far:
+| ID | LiveDisplay profile | QDCM panel mode | Oplus seed |
+| --- | --- | --- | --- |
+| 0 | Vivid | zhal_native | 0 |
+| 1 | Natural | SRGB | 1 |
+| 2 | Cinematic / P3 | zhal_native | 1 |
+| 3 | Brilliant | advance_p3 | 0 |
+| 4 | Wide AMOLED Gamut | advance_native | 3 |
 
-| Codename | Status | Notes |
-|---|---|---|
-| `guacamoleb` | ✅ Tested | Validated with Infinity-X, Android 16 |
-| Other OnePlus 7 family codenames | ❔ Untested | Should pass the same runtime-contract checks on a matching ROM, but this is not yet confirmed by a real report |
+Wide AMOLED Gamut uses the display firmware's existing `advance_native` mode;
+this project exposes it in the native profile list while preserving all four
+stock profiles. Driver/QDCM verification is not a colorimeter measurement of
+gamut or accuracy. Settings reads the fifth profile from the HAL; no overlay,
+SurfaceFlinger property override or feature spoof is installed.
 
-If you run this on another OnePlus 7 family device, please [open an issue](https://github.com/juanmacasado/OnePlus7-Wide-AMOLED-Gamut/issues/new/choose) with the result (working or not) so this table can be kept accurate — see `CONTRIBUTING.md` for what to include.
+## Build and installation
 
-## Display profiles
-
-| ID | LiveDisplay profile | QDCM mode | Oplus seed |
-|---:|---|---|---:|
-| 0 | Vivid | `zhal_native` | 0 |
-| 1 | Natural | `SRGB` | 1 |
-| 2 | Cinematic / P3 | `zhal_native` | 1 |
-| 3 | Brilliant | `advance_p3` | 0 |
-| 4 | Wide AMOLED Gamut | `advance_native` | 3 |
-
-The fifth mode is exposed by the LiveDisplay HAL itself and appears directly in **Settings → Display → LiveDisplay → Color profile**.
-
-## Installation
-
-1. Flash the ZIP in KernelSU Next or Magisk.
-2. Read the compatibility result in the installer log.
-3. Reboot completely.
-4. Select any of the five profiles in LiveDisplay.
-
-The module can be disabled without modifying the physical vendor partition. On uninstall it first switches to Natural so the stock four-mode HAL never receives persisted mode ID 4.
-
-## Runtime behaviour
-
-- Persists the selected profile through the HAL's normal `makeDefault` mechanism.
-- Reapplies the profile after Android finishes booting.
-- Verifies both QDCM and the Oplus seed.
-
-## Diagnostics
-
-KernelSU/Magisk module Action shows the ROM, Android version, selected mode, seed, QDCM state, service state and HAL hashes.
-
-Runtime log:
-
-```text
-/data/adb/modules/oneplus7_extended_display_modes/display-modes.log
+```sh
+bash scripts/build-module.sh
+python3 -m unittest discover -s tests -v
 ```
 
-Installation compatibility record:
+Python 3 is the only packaging dependency. The output and SHA-256 file are in
+`out/`. Sorted paths, fixed UTC timestamps and permissions, and uncompressed ZIP
+entries make builds byte reproducible. Optional `SOURCE_DATE_EPOCH` must be the
+same for comparisons. The HAL remains the original documented binary-patched
+prebuilt; see [source and reproducibility notes](SOURCE.md).
 
-```text
-/data/adb/modules/oneplus7_extended_display_modes/compatibility.info
-```
+1. Preserve the previous ZIP on the computer.
+2. Install the ZIP in KernelSU Next/Magisk on a matching ROM. KernelSU requires
+   a working mount-capable metamodule.
+3. Read the installer results and copy its independent backup from
+   `/data/adb/oneplus7-gamut-backups/` to the computer before rebooting.
+4. With recovery access prepared, perform a controlled reboot and confirm the
+   five profiles in Settings → Display → LiveDisplay → Color profile.
 
-## Author
+The payload is packaged under `system/vendor/bin/hw/`, the standard module
+mount layout. The physical vendor partition is never written. Do not disable
+and immediately reboot while persisted mode 4 is selected: use the
+[safe-disable helper](docs/RECOVERY.md), which selects and verifies Natural.
+Uninstall also normalizes the profile; independent backups are retained.
 
-**juanmacasado**
+## Diagnostics and runtime
 
-See `SOURCE.md`, `NOTICE` and `LICENSE` for source, attribution and licensing information.
+The module Action is read only. It reports persisted/current mode, seed,
+Qualcomm panel QDCM, ROM, service state, visible HAL hash and installation record.
+SF's framework `ColorMode::SRGB` is a different field from Qualcomm's panel mode.
 
-## ROM maintainers
+- Runtime log: `/data/adb/modules/oneplus7_extended_display_modes/display-modes.log`
+- Installation record: `/data/adb/modules/oneplus7_extended_display_modes/compatibility.info`
+- Dependency check: `/data/adb/modules/oneplus7_extended_display_modes/linker-check.txt`
 
-The preferred way to integrate this feature into a ROM is at source level. The flashable module is provided primarily as a tested reference implementation and as a way to validate the feature without rebuilding the ROM.
+The service waits at most 240 seconds for boot/HAL readiness, makes at most three
+boot repair attempts and stops on repeated failures. The monitor checks seed
+at five-second intervals; it does not claim continuous QDCM or HDR verification.
+No SELinux policy changes are shipped. Logs are bounded throughout operation.
 
-Resources:
+## ROM integration and attribution
 
-* [ROM integration guide](docs/INTEGRATION.md)
-* [Source integration patch](patches/0001-oplus-livedisplay-add-Wide-AMOLED-Gamut-display-mode.patch)
-* [Source and reproducibility notes](SOURCE.md)
+The preferred fully source-built route is to apply the authored
+[source patch](patches/0001-oplus-livedisplay-add-Wide-AMOLED-Gamut-display-mode.patch)
+and build the HAL with the ROM. The existing prebuilt was binary-patched from an
+Infinity-X Android 16 HAL; it should not be incorporated into a ROM build.
+See the [integration guide](docs/INTEGRATION.md), [SOURCE.md](SOURCE.md),
+[NOTICE](NOTICE), [LICENSE](LICENSE) and [contribution guide](CONTRIBUTING.md).
+Preserve original Git authorship when applying the integration patch.
 
-The source change adds the following fifth entry to the Oplus LiveDisplay mode map:
+## License
 
-```cpp
-{4, {"Wide AMOLED Gamut", 2, 3}},
-```
+Original module scripts, packaging tools, tests and project documentation are
+licensed under **GNU GPL version 3 or later** (`GPL-3.0-or-later`). See [LICENSE](LICENSE).
 
-This exposes Wide AMOLED Gamut directly in the standard LiveDisplay color profile menu, using QDCM mode `2` (`advance_native`) and Oplus seed `3`.
-
-ROM maintainers are requested to preserve the original Git authorship by applying the supplied patch with `git am` or cherry-picking the original commit.
-
-The prebuilt HAL included in the module should not be incorporated into a ROM build. ROM maintainers should apply the source patch and rebuild `vendor.lineage.livedisplay-service.oplus` as part of the ROM.
-
+The bundled LineageOS-derived HAL, its binary-patch tooling and ROM integration
+patch retain **Apache-2.0**, with their original notices and license text. These
+are separately identified components, not relicensed GPL binaries. See the
+[licensing map](LICENSING.md), [Apache license](LICENSES/Apache-2.0.txt) and
+[NOTICE](NOTICE). Previous Apache-2.0 releases retain their original permissions.

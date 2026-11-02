@@ -4,7 +4,7 @@
 
 This module is validated end-to-end only on `guacamoleb`. Reports for any
 other OnePlus 7 family codename or ROM build are the most valuable
-contribution right now — see the [device compatibility table](README.md#device-compatibility).
+contribution right now — see the [device compatibility table](README.md#supported-scope).
 
 To report a result (working or not), open an issue with:
 
@@ -27,3 +27,11 @@ Shell scripts under `module/` and `scripts/` are linted with ShellCheck in CI.
 `patches/build-five-mode-hal.py` is linted with `ruff`. Please keep both
 clean, and run `scripts/build-module.sh` locally to confirm the flashable
 module still builds before opening a pull request.
+
+## Contribution licensing
+
+New contributions to the original module, packaging tools, tests and project
+documentation are submitted under GPL-3.0-or-later unless explicitly agreed
+otherwise. Contributions to the Apache-2.0 HAL patch tooling and ROM integration
+patch retain Apache-2.0. Preserve existing copyright and SPDX notices. See
+`LICENSING.md`; previously published versions keep their original licenses.

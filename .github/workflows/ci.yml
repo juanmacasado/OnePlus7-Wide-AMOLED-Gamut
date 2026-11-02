@@ -11,19 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Run ShellCheck on module and build scripts
-        uses: ludeeus/action-shellcheck@master
-        with:
-          scandir: '.'
-          ignore_paths: >-
-            .git
-          additional_files: |
-            module/action.sh
-            module/customize.sh
-            module/post-fs-data.sh
-            module/service.sh
-            module/uninstall.sh
-            scripts/build-module.sh
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Check module and build scripts
+        run: shellcheck -x module/*.sh scripts/*.sh
 
   python-lint:
     runs-on: ubuntu-latest
@@ -35,7 +26,7 @@ jobs:
       - name: Install ruff
         run: pip install ruff
       - name: Lint patch tooling
-        run: ruff check patches/build-five-mode-hal.py
+        run: ruff check patches/build-five-mode-hal.py scripts/build-module.py tests/
 
   build:
     runs-on: ubuntu-latest
@@ -44,8 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build the flashable module
         run: |
-          sudo apt-get update
-          sudo apt-get install -y zip
+          python3 -m unittest discover -s tests -v
           bash scripts/build-module.sh
       - name: Verify bundled HAL integrity
         run: |

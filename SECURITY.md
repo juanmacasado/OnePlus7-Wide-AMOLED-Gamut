@@ -31,5 +31,5 @@ the maintainer listed in `AUTHORS` directly.
 ## Scope
 
 This module only targets the OnePlus 7 family running LineageOS-derived
-Android 16 ROMs with the standard Oplus AIDL LiveDisplay stack described in
+Android 16 ROMs and the narrowly audited Android 17 build with the standard Oplus AIDL LiveDisplay stack described in
 `README.md`. Reports about unrelated devices or ROMs are out of scope.

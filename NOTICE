@@ -7,8 +7,12 @@ android_hardware_oplus LiveDisplay implementation.
 Upstream copyright:
   SPDX-FileCopyrightText: 2019-2025 The LineageOS Project
 
-Upstream and project licensing:
+Upstream HAL and patches/ component licensing:
   SPDX-License-Identifier: Apache-2.0
+
+Original module, packaging, tests and project documentation (from 1.2.0):
+  SPDX-License-Identifier: GPL-3.0-or-later
+  See LICENSE, LICENSES/Apache-2.0.txt and LICENSING.md.
 
 Immediate build provenance:
   The specific bytes patched by this project were extracted from a

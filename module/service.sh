@@ -1,133 +1,64 @@
 #!/system/bin/sh
 # SPDX-FileCopyrightText: 2026 juanmacasado
-# SPDX-License-Identifier: Apache-2.0
-# OnePlus 7 Wide AMOLED Gamut - portable LineageOS edition
-# 0 Vivid              -> QDCM zhal_native    / seed 0
-# 1 Natural            -> QDCM SRGB           / seed 1
-# 2 Cinematic / P3     -> QDCM zhal_native    / seed 1
-# 3 Brilliant          -> QDCM advance_p3     / seed 0
-# 4 Wide AMOLED Gamut  -> QDCM advance_native / seed 3
-
+# SPDX-License-Identifier: GPL-3.0-or-later
 MODDIR=${0%/*}
+# shellcheck source=module/common.sh
+. "$MODDIR/common.sh"
 LOG="$MODDIR/display-modes.log"
-SERVICE="vendor.lineage.livedisplay.IDisplayModes/default"
-MODE_FILE="/data/vendor/display/default_display_mode"
-SEED_NODE="/sys/kernel/oplus_display/seed"
-
 log_msg() {
+  if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 131072 ]; then
+    tail -c 65536 "$LOG" > "$LOG.tmp" && mv -f "$LOG.tmp" "$LOG"
+  fi
   echo "[$(date '+%F %T')] $*" >> "$LOG"
 }
-
-read_one_line() {
-  cat "$1" 2>/dev/null | tr -d '\r\n[:space:]'
-}
-
-expected_seed() {
-  case "$1" in
-    0) echo 0 ;;
-    1) echo 1 ;;
-    2) echo 1 ;;
-    3) echo 0 ;;
-    4) echo 3 ;;
-    *) echo "" ;;
-  esac
-}
-
-expected_qdcm() {
-  case "$1" in
-    0) echo zhal_native ;;
-    1) echo SRGB ;;
-    2) echo zhal_native ;;
-    3) echo advance_p3 ;;
-    4) echo advance_native ;;
-    *) echo "" ;;
-  esac
-}
-
-read_qdcm() {
-  dumpsys SurfaceFlinger 2>/dev/null |
-    sed -n 's/.*Current Color Mode:[[:space:]]*//p' |
-    tail -n 1 |
-    tr -d '\r\n[:space:]'
-}
-
-call_mode() {
-  service call "$SERVICE" 4 i32 "$1" i32 "$2" 2>&1
-}
-
-# Keep the diagnostic log bounded.
-if [ -f "$LOG" ]; then
-  SIZE="$(wc -c < "$LOG" 2>/dev/null)"
-  [ -n "$SIZE" ] || SIZE=0
-  if [ "$SIZE" -gt 131072 ]; then
-    tail -c 65536 "$LOG" > "$LOG.tmp" 2>/dev/null
-    mv -f "$LOG.tmp" "$LOG" 2>/dev/null
-  fi
-fi
-
 WAIT=0
-while true; do
-  if [ -e "$SEED_NODE" ] && [ -r "$MODE_FILE" ] && \
-     service check "$SERVICE" 2>/dev/null | grep -q found; then
-    break
-  fi
-  sleep 1
-  WAIT=$((WAIT + 1))
-  [ "$WAIT" -eq 180 ] && log_msg "still waiting for HAL, mode file or seed node"
-done
-
-# Wait until Android is fully operational.
-BOOT_WAIT=0
-while [ "$(getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
-  sleep 1
-  BOOT_WAIT=$((BOOT_WAIT + 1))
-  [ "$BOOT_WAIT" -ge 240 ] && break
-done
-sleep 3
-
-# Reapply the persisted profile after boot. The display stack can initialize
-# with the correct seed but the wrong QDCM mode, so both values are verified.
-BOOT_TRY=1
-while [ "$BOOT_TRY" -le 12 ]; do
-  MODE="$(read_one_line "$MODE_FILE")"
-  DESIRED_SEED="$(expected_seed "$MODE")"
-  DESIRED_QDCM="$(expected_qdcm "$MODE")"
-  [ -n "$DESIRED_SEED" ] || break
-
-  RESULT="$(call_mode "$MODE" 0)"
+while [ "$WAIT" -lt 240 ]; do
+  [ -e "$MODDIR/disable" ] && exit 0
+  if [ "$(getprop sys.boot_completed)" = 1 ] && [ -r "$MODE_FILE" ] &&
+     [ -r "$SEED_NODE" ] && service_ready; then break; fi
   sleep 2
-  CURRENT_SEED="$(read_one_line "$SEED_NODE")"
-  CURRENT_QDCM="$(read_qdcm)"
-  log_msg "boot reapply try=$BOOT_TRY mode=$MODE seed=$CURRENT_SEED/$DESIRED_SEED qdcm=$CURRENT_QDCM/$DESIRED_QDCM result=$RESULT"
-
-  if [ "$CURRENT_SEED" = "$DESIRED_SEED" ] && [ "$CURRENT_QDCM" = "$DESIRED_QDCM" ]; then
-    break
-  fi
-
-  BOOT_TRY=$((BOOT_TRY + 1))
-  sleep 2
+  WAIT=$((WAIT + 2))
 done
-
-log_msg "five-mode monitor started"
-LAST_MODE=""
-LAST_SEED=""
-
-while true; do
-  MODE="$(read_one_line "$MODE_FILE")"
-  DESIRED="$(expected_seed "$MODE")"
-  [ -n "$DESIRED" ] || { sleep 2; continue; }
-
-  CURRENT="$(read_one_line "$SEED_NODE")"
-  if [ "$CURRENT" != "$DESIRED" ]; then
-    RESULT="$(call_mode "$MODE" 0)"
+[ "$WAIT" -lt 240 ] || { log_msg 'HAL/boot timeout; no profile writes'; exit 1; }
+HASH=$(sha256sum "$BIN" | awk '{print $1}')
+[ "$HASH" = "$PAYLOAD_HASH" ] || { log_msg 'Replacement not mounted; no profile writes'; exit 1; }
+# Bounded boot repair. An absent vendor dump field is unknown, never a match.
+TRY=0
+while [ "$TRY" -lt 3 ]; do
+  MODE=$(read_one_line "$MODE_FILE")
+  DESIRED_SEED=$(expected_seed "$MODE") || { log_msg "Invalid persisted mode: $MODE"; exit 1; }
+  DESIRED_QDCM=$(expected_qdcm "$MODE")
+  RESULT=$(call_mode "$MODE" 0)
+  sleep 2
+  SEED=$(read_one_line "$SEED_NODE")
+  QDCM=$(read_qdcm)
+  log_msg "boot mode=$MODE seed=$SEED/$DESIRED_SEED qdcm=${QDCM:-unknown}/$DESIRED_QDCM result=$RESULT"
+  mode_succeeded "$RESULT" || { log_msg 'Binder failure; stopping'; exit 1; }
+  [ "$SEED" = "$DESIRED_SEED" ] && [ "$QDCM" = "$DESIRED_QDCM" ] && break
+  TRY=$((TRY + 1))
+done
+[ "$TRY" -lt 3 ] || { log_msg 'Profile verification failed; stopping'; exit 1; }
+log_msg 'Profile monitor started'
+FAILURES=0
+while [ ! -e "$MODDIR/disable" ] && [ ! -e "$MODDIR/remove" ]; do
+  MODE=$(read_one_line "$MODE_FILE")
+  DESIRED_SEED=$(expected_seed "$MODE") || { log_msg 'Invalid mode; stopping'; exit 1; }
+  SEED=$(read_one_line "$SEED_NODE")
+  if [ "$SEED" != "$DESIRED_SEED" ]; then
+    service_ready || { log_msg 'HAL disappeared; stopping'; exit 1; }
+    RESULT=$(call_mode "$MODE" 0)
     sleep 1
-    VERIFIED="$(read_one_line "$SEED_NODE")"
-    log_msg "mode=$MODE seed $CURRENT -> $VERIFIED desired=$DESIRED result=$RESULT"
-  elif [ "$MODE" != "$LAST_MODE" ] || [ "$CURRENT" != "$LAST_SEED" ]; then
-    log_msg "mode=$MODE seed=$CURRENT correct"
+    VERIFIED=$(read_one_line "$SEED_NODE")
+    log_msg "repair mode=$MODE seed=$SEED->$VERIFIED expected=$DESIRED_SEED result=$RESULT"
+    if mode_succeeded "$RESULT" && [ "$VERIFIED" = "$DESIRED_SEED" ]; then
+      FAILURES=0
+    else
+      FAILURES=$((FAILURES + 1))
+      [ "$FAILURES" -lt 3 ] || { log_msg 'Repeated repair failure; stopping'; exit 1; }
+    fi
   fi
-
-  LAST_MODE="$MODE"
-  LAST_SEED="$CURRENT"
-  sleep 2
+  sleep 5
 done
+# A normal disable while Android is running leaves a stock-compatible ID.
+RESULT=$(call_mode 1 1)
+log_msg "disable/remove: Natural requested; result=$RESULT"

@@ -72,7 +72,7 @@ The preferred integration method is to preserve the original Git authorship.
 
 ## Validation
 
-The implementation was validated on the OnePlus 7 (`guacamoleb`) with Infinity-X Android 16.
+The implementation was originally validated on the OnePlus 7 (`guacamoleb`) with Infinity-X Android 16. Version 1.2.0 also passed a reversible runtime test of the unchanged module prebuilt on Infinity-X 4.1 / Android 17; this was not a source-built ROM or full reboot validation. See [the Android 17 audit](ANDROID17-VALIDATION.md).
 
 Expected Wide AMOLED Gamut state:
 

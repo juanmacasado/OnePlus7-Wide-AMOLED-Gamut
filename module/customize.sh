@@ -1,126 +1,109 @@
 #!/system/bin/sh
 # SPDX-FileCopyrightText: 2026 juanmacasado
-# SPDX-License-Identifier: Apache-2.0
-
-PAYLOAD_HASH="277edf431056e91a8dbf69582b4dd788abe13958b9222deb21247254dcfeeb3f"
-TARGET="/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"
-PAYLOAD="$MODPATH/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"
-SERVICE="vendor.lineage.livedisplay.IDisplayModes/default"
-MODE_FILE="/data/vendor/display/default_display_mode"
-SEED_NODE="/sys/kernel/oplus_display/seed"
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Sourced by the root manager after extraction; Android must be running.
+# shellcheck source=module/common.sh
+. "$MODPATH/common.sh"
+PAYLOAD="$MODPATH/system/vendor/bin/hw/vendor.lineage.livedisplay-service.oplus"
 INFO="$MODPATH/compatibility.info"
+ANDROID17_STOCK_HASH=e560a2af35908d40e6f564f2f72bb315ddd3bd3cc3da13fca49c2bcdc3ce40e5
+ui_print 'OnePlus 7 Wide AMOLED Gamut 1.2.0'
+[ "${BOOTMODE:-false}" = true ] || abort 'Install from the root manager in running Android; recovery is not supported.'
+[ "$(id -u)" = 0 ] || abort 'Root is required.'
+[ "${ARCH:-}" = arm64 ] || abort 'Only arm64 is supported.'
+[ "$(getconf PAGESIZE)" = 4096 ] || abort 'This HAL requires a 4 KiB page-size device.'
 
-ui_print "*********************************************"
-ui_print " OnePlus 7 Wide AMOLED Gamut 1.1.1.1"
-ui_print " Portable LineageOS edition"
-ui_print "*********************************************"
-ui_print "Author: juanmacasado"
-ui_print "Adds a fifth native mode directly to LiveDisplay"
-ui_print "No companion APK is installed"
-
-DEVICE="$(getprop ro.product.device)"
-VENDOR_DEVICE="$(getprop ro.product.vendor.device)"
-PRODUCT_DEVICE="$(getprop ro.product.product.device)"
-BUILD_PRODUCT="$(getprop ro.build.product)"
-PRODUCT_NAME="$(getprop ro.product.name)"
-MODEL="$(getprop ro.product.model)"
-SDK="$(getprop ro.build.version.sdk)"
-RELEASE="$(getprop ro.build.version.release)"
-FINGERPRINT="$(getprop ro.build.fingerprint)"
-ROM_DISPLAY="$(getprop ro.build.display.id)"
-DEVICE_INFO="$DEVICE $VENDOR_DEVICE $PRODUCT_DEVICE $BUILD_PRODUCT $PRODUCT_NAME $MODEL"
-DEVICE_INFO_LC="$(printf '%s' "$DEVICE_INFO" | tr '[:upper:]' '[:lower:]')"
-
-case "$DEVICE_INFO_LC" in
-  *guacamoleb*|*oneplus7*|*gm190*) ;;
-  *)
-    ui_print "Detected identity: $DEVICE / $VENDOR_DEVICE / $PRODUCT_DEVICE"
-    ui_print "Build/product/model: $BUILD_PRODUCT / $PRODUCT_NAME / $MODEL"
-    abort "Unsupported device. This module is only for the OnePlus 7."
-    ;;
-esac
-
-# The distributed HAL is built for the current AIDL-based LiveDisplay stack.
-# This prebuilt targets Android 16 / SDK 36. Portability here means across
-# compatible LineageOS-derived ROM builds, not across Android generations.
-case "$SDK" in
-  36) ;;
-  *) abort "Unsupported Android SDK $SDK. This portable release targets Android 16." ;;
-esac
-
-[ -f "$TARGET" ] || abort "Oplus LiveDisplay HAL not found: $TARGET"
-[ -f "$PAYLOAD" ] || abort "Bundled five-mode HAL is missing"
-[ -e "$SEED_NODE" ] || abort "Oplus seed node not found. OxygenOS 12 display firmware/kernel support is required."
-[ -e /dev/oplus_display ] || abort "/dev/oplus_display is missing. The required Oplus panel interface is unavailable."
-
-if ! service check "$SERVICE" 2>/dev/null | grep -q found; then
-  abort "The LineageOS IDisplayModes service is not available on this ROM."
+DEVICE=$(getprop ro.product.device)
+VENDOR_DEVICE=$(getprop ro.product.vendor.device)
+MODEL=$(getprop ro.product.model)
+SDK=$(getprop ro.build.version.sdk)
+RELEASE=$(getprop ro.build.version.release)
+ROM_DISPLAY=$(getprop ro.build.display.id)
+DEVICE_OK=false
+for IDENTITY in "$DEVICE" "$VENDOR_DEVICE" "$MODEL" "$(getprop ro.infinity.device)"; do
+  IDENTITY=$(printf '%s' "$IDENTITY" | tr '[:upper:]' '[:lower:]')
+  case "$IDENTITY" in guacamoleb|oneplus7|gm190[0-9]) DEVICE_OK=true ;; esac
+done
+[ "$DEVICE_OK" = true ] || abort "Unsupported device: $DEVICE / $VENDOR_DEVICE / $MODEL"
+case "$SDK" in 36|37) ;; *) abort "Unsupported SDK: $SDK (only 36/37)" ;; esac
+[ -f "$BIN" ] || abort "Oplus LiveDisplay HAL missing: $BIN"
+[ -f "$PAYLOAD" ] || abort 'Bundled five-mode HAL missing'
+[ -r "$SEED_NODE" ] && [ -e /dev/oplus_display ] || abort 'Oplus panel interface missing'
+service_ready || abort 'LineageOS IDisplayModes is not accessible'
+for NEEDLE in vendor.lineage.livedisplay-V1-ndk.so IDisplayModes /dev/oplus_display \
+  "$MODE_FILE" DisplayModesService Natural Cinematic Brilliant \
+  IAntiFlicker IPictureAdjustment ISunlightEnhancement; do
+  grep -Fqa "$NEEDLE" "$BIN" || abort "Unexpected HAL; missing signature: $NEEDLE"
+done
+TARGET_HASH=$(sha256sum "$BIN" | awk '{print $1}')
+ACTUAL_PAYLOAD_HASH=$(sha256sum "$PAYLOAD" | awk '{print $1}')
+[ "$ACTUAL_PAYLOAD_HASH" = "$PAYLOAD_HASH" ] || abort 'Bundled HAL integrity check failed'
+if [ "$SDK" = 37 ] && [ "$(getprop ro.infinity.build.version)" != \
+   Project_Infinity-X-4.1-guacamoleb-02.11.2026 ]; then
+  abort 'Android 17 support is scoped to the audited Infinity-X 4.1 build (2026-11-02)'
 fi
-
-# Semantic compatibility gate.
-# restriction: ROMs may compile the same upstream HAL to different bytes.
-# We accept only the standard Oplus AIDL LiveDisplay family with the original
-# four profile names and required stable dependencies/interfaces.
-for NEEDLE in \
-  "vendor.lineage.livedisplay-V1-ndk.so" \
-  "IDisplayModes" \
-  "/dev/oplus_display" \
-  "$MODE_FILE" \
-  "DisplayModesService" "Natural" "Cinematic" "Brilliant"; do
-  if ! grep -Fqa "$NEEDLE" "$TARGET" 2>/dev/null; then
-    ui_print "Missing expected HAL signature: $NEEDLE"
-    abort "This ROM does not use the compatible standard Oplus LiveDisplay HAL."
+# AIDL V1 alone does not guarantee private libbinder/libutils C++ ABI stability.
+# SDK 37 is admitted only for the observed ROM HAL or an existing payload.
+if [ "$SDK" = 37 ] && [ "$TARGET_HASH" != "$ANDROID17_STOCK_HASH" ] &&
+   [ "$TARGET_HASH" != "$PAYLOAD_HASH" ]; then
+  abort "Android 17 HAL has not been audited: $TARGET_HASH"
+fi
+# /data/adb is assigned the system linker namespace on this ROM. A vendor
+# executable must be checked in a vendor test directory, which uses the same
+# namespace as /vendor/bin. Do not change global linker config or LD_* variables.
+LINKER_ROOT=/data/local/tests/vendor
+mkdir -p "$LINKER_ROOT" || abort 'Could not create vendor linker test directory'
+LINKER_CHECK=$(mktemp -d "$LINKER_ROOT/oneplus7-gamut.XXXXXX") ||
+  abort 'Could not create private vendor linker staging directory'
+LINKER_OK=false
+if cp "$PAYLOAD" "$LINKER_CHECK/hal" && chmod 0755 "$LINKER_CHECK/hal" &&
+   [ "$(sha256sum "$LINKER_CHECK/hal" | awk '{print $1}')" = "$PAYLOAD_HASH" ]; then
+  if /system/bin/linker64 --list "$LINKER_CHECK/hal" > "$MODPATH/linker-check.txt" 2>&1; then
+    LINKER_OK=true
   fi
-done
-
-# The replacement preserves the complete OnePlus 7 service feature set.
-# Matching these interfaces avoids replacing a substantially different HAL.
-for NEEDLE in \
-  "IAntiFlicker" \
-  "IPictureAdjustment" \
-  "ISunlightEnhancement"; do
-  if ! grep -Fqa "$NEEDLE" "$TARGET" 2>/dev/null; then
-    ui_print "Missing expected companion interface: $NEEDLE"
-    abort "The ROM's LiveDisplay service feature set differs from the supported OnePlus 7 stack."
+fi
+rm -f "$LINKER_CHECK/hal"
+rmdir "$LINKER_CHECK"
+if [ "$LINKER_OK" != true ]; then
+  if [ -f "$MODPATH/linker-check.txt" ]; then
+    while IFS= read -r LINE; do ui_print "$LINE"; done < "$MODPATH/linker-check.txt"
   fi
-done
-
-TARGET_HASH="$(sha256sum "$TARGET" 2>/dev/null | awk '{print $1}')"
-ACTUAL_PAYLOAD_HASH="$(sha256sum "$PAYLOAD" 2>/dev/null | awk '{print $1}')"
-[ "$ACTUAL_PAYLOAD_HASH" = "$PAYLOAD_HASH" ] || abort "Bundled HAL failed integrity verification"
-
-ui_print "- Device: $MODEL ($DEVICE)"
-ui_print "- Android: $RELEASE / SDK $SDK"
-ui_print "- Standard Oplus AIDL LiveDisplay detected"
-ui_print "- Current HAL SHA-256: $TARGET_HASH"
-ui_print "- Binary hash is informational, not a ROM lock"
-
+  abort 'HAL dependency resolution failed in vendor namespace'
+fi
+# No destructive upgrade: keep independent backups outside both module slots.
+BACKUP_ROOT=/data/adb/oneplus7-gamut-backups
+BACKUP="$BACKUP_ROOT/$(date -u '+%Y%m%dT%H%M%SZ')-$$"
+(umask 077; mkdir -p "$BACKUP") || abort 'Could not create backup directory'
+chmod 0700 "$BACKUP_ROOT" "$BACKUP"
+cp -p "$BIN" "$BACKUP/visible-hal" || abort 'HAL backup failed'
+if [ -f "$MODE_FILE" ]; then
+  cp -p "$MODE_FILE" "$BACKUP/default_display_mode" || abort 'Mode backup failed'
+fi
+OLD=/data/adb/modules/oneplus7_extended_display_modes
+if [ -d "$OLD" ]; then
+  tar -cf "$BACKUP/previous-module.tar" -C "$OLD" . || abort 'Previous module backup failed'
+fi
 cat > "$INFO" <<INFOEOF
-module=OnePlus 7 Wide AMOLED Gamut 1.1.1.1
-installation_mode=portable-semantic-compatibility
-rom_display=$ROM_DISPLAY
-fingerprint=$FINGERPRINT
+module_version=1.2.0
 sdk=$SDK
 release=$RELEASE
+rom_display=$ROM_DISPLAY
+infinity_version=$(getprop ro.infinity.version)
 device=$DEVICE
-vendor_device=$VENDOR_DEVICE
 model=$MODEL
 original_visible_hal_sha256=$TARGET_HASH
 replacement_hal_sha256=$PAYLOAD_HASH
-service=$SERVICE
+backup=$BACKUP
+android17_scope=audited-hal-only
 INFOEOF
-
-rm -rf "$MODPATH/system" "$MODPATH/system_ext" "$MODPATH/payload" "$MODPATH/tools"
-rm -f "$MODPATH/sepolicy.rule"
-
+cp "$INFO" "$BACKUP/compatibility.info" || abort 'Backup metadata failed'
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$PAYLOAD" 0 2000 0755 u:object_r:hal_lineage_livedisplay_qti_exec:s0
-set_perm "$MODPATH/post-fs-data.sh" 0 0 0755
-set_perm "$MODPATH/service.sh" 0 0 0755
-set_perm "$MODPATH/action.sh" 0 0 0755
-set_perm "$MODPATH/uninstall.sh" 0 0 0755
-
-ui_print "- Portable compatibility checks passed"
-ui_print "- Five-mode HAL verified: $PAYLOAD_HASH"
-ui_print "- Select all five profiles directly in LiveDisplay"
-ui_print "- Reboot required"
+for SCRIPT in post-fs-data.sh service.sh action.sh uninstall.sh disable.sh; do
+  set_perm "$MODPATH/$SCRIPT" 0 0 0755
+done
+ui_print "- Android $RELEASE / SDK $SDK; HAL checks passed"
+ui_print "- Backup: $BACKUP"
+ui_print '- system/vendor overlay prepared; physical vendor is unchanged'
+ui_print '- Runtime verified on Infinity-X 4.1; maintainer reports working after installation'
+ui_print '- Read docs/ANDROID17-VALIDATION.md and docs/RECOVERY.md before reboot'
